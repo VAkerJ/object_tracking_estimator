@@ -2,7 +2,12 @@ import cv2
 import time
 import numpy as np
 
-def grab_cut(base_image, mask, selected_area, bgModel, fgModel, iterC):
+def grab_cut(base_image, selected_area, iterC):
+	# initiera graphcut variabler
+	mask = np.zeros(base_image.shape[:2], dtype="uint8")
+	fgModel = np.zeros((1, 65), dtype="float")
+	bgModel = np.zeros((1, 65), dtype="float")
+	
 	# applicera grab cut
 	start = time.time()
 	(mask, bgModel, fgModel) = cv2.grabCut(base_image, mask, selected_area,
