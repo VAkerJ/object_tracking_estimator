@@ -31,7 +31,7 @@ def main():
         time.sleep(dt)
 
 def getMeasurement(t):
-    return 2*t
+    return 3*t
 
 
 if __name__ == "__main__":
