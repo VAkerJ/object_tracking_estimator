@@ -29,11 +29,6 @@ if __name__=="__main__":
 	success,base_image = vidcap.read()
 	image = base_image
 
-	# initiera graphcut variabler
-	mask = np.zeros(image.shape[:2], dtype="uint8")
-	fgModel = np.zeros((1, 65), dtype="float")
-	bgModel = np.zeros((1, 65), dtype="float")
-
 	count = 0
 	while success:
 		# kolla om rektangeln börjat bli vald och rita isf ut den
@@ -44,7 +39,7 @@ if __name__=="__main__":
 				selected_area = tuple(list(p0) + list(p1))
 				rect.clear()
 
-				outputMask, output = Grab_Cut(base_image, mask, selected_area, bgModel, fgModel, args["iter"])
+				outputMask, output = Grab_Cut(base_image, selected_area, args["iter"])
 				cv2.imshow("GrabCut Mask", outputMask)
 				cv2.imshow("GrabCut output", output)
 				cv2.waitKey(1)
