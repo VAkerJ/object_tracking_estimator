@@ -4,58 +4,7 @@ import os
 import numpy as np
 from copy import copy
 
-import time
-
-class Rectangle():
-	def __init__(self):
-		self.p0, self.p1, self.ptemp = None, None, None
-
-	def get_points(self):
-		p0, p1 = self.p0, self.p1
-		if p1 is None: p1 = self.ptemp
-		return p0, p1
-
-	def is_active(self):
-		return self.p0 is not None
-
-	def is_finished(self):
-		return self.p1 is not None
-
-	def clear(self):
-		self.p0, self.p1, self.ptemp = None, None, None
-
-	def mouse_test(self, event, x, y, flags, param):
-		if event == 1: #mouse1 click
-			self.p0 = (x,y)
-
-		elif event == 4: #mouse1 release
-			self.p1 = (x,y)
-
-		if self.p0 is not None: self.ptemp = (x,y)
-
-def get_mask(mask):
-
-	## visualisera graph cut resultaten
-	#values = (
-	#	("Definite Background", cv2.GC_BGD),
-	#	("Probable Background", cv2.GC_PR_BGD),
-	#	("Definite Foreground", cv2.GC_FGD),
-	#	("Probable Foreground", cv2.GC_PR_FGD),
-	#)
-	#for (name, value) in values:
-	#	print("[INFO] showing mask for '{}'".format(name))
-	#	valueMask = (mask == value).astype("uint8") * 255
-	#	cv2.imshow(name, valueMask)
-	#	cv2.waitKey(1)
-
-	# maska så att prob bg och def bg blir 0
-	outputMask = np.where((mask == cv2.GC_BGD) | (mask == cv2.GC_PR_BGD), 0,1)
-	
-	# skala fr 0:1 till 0:255
-	outputMask = (outputMask * 255).astype("uint8")
-
-	return outputMask
-
+from utils import Rectangle, Grab_Cut
 
 
 if __name__=="__main__":
@@ -95,15 +44,7 @@ if __name__=="__main__":
 				selected_area = tuple(list(p0) + list(p1))
 				rect.clear()
 
-				# applicera grab cut
-				start = time.time()
-				(mask, bgModel, fgModel) = cv2.grabCut(base_image, mask, selected_area,
-				bgModel, fgModel, iterCount=args["iter"], mode=cv2.GC_INIT_WITH_RECT)
-				end = time.time()
-				print("[INFO] applying GrabCut took {:.2f} seconds".format(end - start))
-
-				outputMask = get_mask(mask)
-				output = cv2.bitwise_and(base_image, base_image, mask=outputMask)
+				outputMask, output = Grab_Cut(base_image, mask, selected_area, bgModel, fgModel, args["iter"])
 				cv2.imshow("GrabCut Mask", outputMask)
 				cv2.imshow("GrabCut output", output)
 				cv2.waitKey(1)
