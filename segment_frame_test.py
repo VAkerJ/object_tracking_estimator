@@ -4,10 +4,11 @@ import os
 import numpy as np
 from copy import copy
 
-from utils import Rectangle, Grab_Cut
+from utils import Rectangle, Grab_Cut, Kmeans, Contour_Detection
 
 
 if __name__=="__main__":
+	
 
 	# arg parser, spelar ingen roll just nu
 	ap = argparse.ArgumentParser()
@@ -15,8 +16,20 @@ if __name__=="__main__":
 		default=os.path.sep.join(["test_data", "frodo_1.mp4"]),
 		help="path to input video")
 	ap.add_argument("-c", "--iter", type=int, default=10,
-		help="# of GrabCut iterations")
+		help="# of GrabCut or Kmeans iterations")
+	ap.add_argument("-s", "--segment", type=str, default="Grab_Cut",
+		help="type of segmentation method")
+	ap.add_argument("-v", "--verbose", type=int, default=1,
+		help="determine verbosity")
+	ap.add_argument("-k", "--clusters", type=int, default=2,
+		help="# of Kmeans clusters")
 	args = vars(ap.parse_args())
+
+	segmentaion_methods = {"Grab_Cut" : [Grab_Cut, [args["iter"], args["verbose"]]],
+							"Kmeans" : [Kmeans, [args["iter"], args["clusters"], args["verbose"]]],
+							"Contour_Detection" : [Contour_Detection, []]}
+	segment, segArgs = segmentaion_methods[args["segment"]]
+
 
 	# initiera fönstret och rektangeln som används för val av area
 	rect = Rectangle()
@@ -39,10 +52,10 @@ if __name__=="__main__":
 				selected_area = tuple(list(p0) + list(p1))
 				rect.clear()
 
-				outputMask, output = Grab_Cut(base_image, selected_area, args["iter"])
-				cv2.imshow("GrabCut Mask", outputMask)
-				cv2.imshow("GrabCut output", output)
-				cv2.waitKey(1)
+				#outputMask, output = Grab_Cut(base_image, selected_area, args["iter"])
+				
+				segment(*(base_image, selected_area, *segArgs))
+				
 
 		cv2.imshow(windowName, image) # visa bilden med eller utan rektangel
 

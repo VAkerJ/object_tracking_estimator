@@ -2,21 +2,30 @@ import cv2
 import time
 import numpy as np
 
-def grab_cut(base_image, selected_area, iterC):
+from .image_tools import crop_image
+
+def grab_cut(base_image, selected_area, iterC, verbose=1):
+	image, selected_area = crop_image(base_image, selected_area)
+
 	# initiera graphcut variabler
-	mask = np.zeros(base_image.shape[:2], dtype="uint8")
+	mask = np.zeros(image.shape[:2], dtype="uint8")
 	fgModel = np.zeros((1, 65), dtype="float")
 	bgModel = np.zeros((1, 65), dtype="float")
 	
 	# applicera grab cut
 	start = time.time()
-	(mask, bgModel, fgModel) = cv2.grabCut(base_image, mask, selected_area,
+	(mask, bgModel, fgModel) = cv2.grabCut(image, mask, selected_area,
 	bgModel, fgModel, iterCount=iterC, mode=cv2.GC_INIT_WITH_RECT)
 	end = time.time()
 	print("[INFO] applying GrabCut took {:.2f} seconds".format(end - start))
 
 	outputMask = get_mask(mask)
-	output = cv2.bitwise_and(base_image, base_image, mask=outputMask)
+	output = cv2.bitwise_and(image, image, mask=outputMask)
+	if verbose > 0:
+		cv2.imshow("Cropped image", image)
+		cv2.imshow("GrabCut Mask", outputMask)
+		cv2.imshow("GrabCut output", output)
+		cv2.waitKey(1)
 	return outputMask, output
 
 def get_mask(mask):
