@@ -10,7 +10,7 @@ from utils import Rectangle, Grab_Cut, Kmeans, Contour_Detection
 if __name__=="__main__":
 	
 
-	# arg parser, spelar ingen roll just nu
+	# arg parser, nyttja text 'python3 segment_frame_test.py -s Kmeans' för att köra med Kmeans metoden
 	ap = argparse.ArgumentParser()
 	ap.add_argument("-i", "--input", type=str,
 		default=os.path.sep.join(["test_data", "frodo_1.mp4"]),
