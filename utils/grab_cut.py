@@ -5,7 +5,7 @@ import numpy as np
 from .image_tools import crop_image
 
 def grab_cut(base_image, selected_area, iterC, verbose=1):
-	image, selected_area = crop_image(base_image, selected_area)
+	image, selected_area = crop_image(base_image, selected_area, factor=2)
 
 	# initiera graphcut variabler
 	mask = np.zeros(image.shape[:2], dtype="uint8")

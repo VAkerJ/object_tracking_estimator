@@ -49,7 +49,8 @@ if __name__=="__main__":
 			p0, p1 = rect.get_points()
 			image = cv2.rectangle(copy(base_image), p0, p1, (0,0,255), 1)
 			if rect.is_finished(): # kolla om rektangeln är klar (m1 släppt)
-				selected_area = tuple(list(p0) + list(p1))
+				#selected_area = tuple(list(p0) + list(p1))
+				selected_area = rect.get_rec()
 				rect.clear()
 
 				#outputMask, output = Grab_Cut(base_image, selected_area, args["iter"])
