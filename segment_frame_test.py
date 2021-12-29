@@ -56,14 +56,12 @@ if __name__=="__main__":
 				#outputMask, output = Grab_Cut(base_image, selected_area, args["iter"])
 				
 				outputMask, output, new_selected_area = Segment(base_image, selected_area)
-				#outputMask = (outputMask > 0).astype("uint8")
+				#outputMask = (outputMask > 0).astype("uint8") # TODO fixa denhär jävla skiten
 				print(type(outputMask))
 				print(np.shape(outputMask)) # croppad bin mask
 				print(new_selected_area) # coordinater av bin mask i croppad
 				print(selected_area) # coordinater av bin mask i orginal
-				#indices = np.indices(np.shape(outputMask))
-				#print(np.shape(indices))
-				#print(indices[:,0,1])
+
 				index_list = []
 				index_tot = [0,0]
 				X = np.shape(outputMask)[1]
@@ -75,7 +73,6 @@ if __name__=="__main__":
 							index_tot[0] += x
 							index_tot[1] += y
 
-				#index_mean = index_tot//len(index_list)
 				index_mean = (index_tot[0]//len(index_list), index_tot[1]//len(index_list))
 				print(index_mean)
 
