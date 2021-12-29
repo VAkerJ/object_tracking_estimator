@@ -29,7 +29,7 @@ if __name__=="__main__":
 							"Kmeans" : [Kmeans, [args["iter"], args["clusters"], args["verbose"]]],
 							"Contour_Detection" : [Contour_Detection, []]}
 	segment, segArgs = segmentaion_methods[args["segment"]]
-
+	Segment = lambda image, area: segment(image, area, *segArgs)
 
 	# initiera fönstret och rektangeln som används för val av area
 	rect = Rectangle()
@@ -55,7 +55,7 @@ if __name__=="__main__":
 
 				#outputMask, output = Grab_Cut(base_image, selected_area, args["iter"])
 				
-				segment(*(base_image, selected_area, *segArgs))
+				Segment(base_image, selected_area)
 				
 
 		cv2.imshow(windowName, image) # visa bilden med eller utan rektangel

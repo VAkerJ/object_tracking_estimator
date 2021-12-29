@@ -19,7 +19,9 @@ class Rectangle():
 		return (x_min, y_min, x_len, y_len)
 
 	def is_active(self):
-		return self.p0 is not None
+		active = bool(self.p0 is not None)
+		if active: active = bool(self.p0!=self.p1)
+		return active
 
 	def is_finished(self):
 		return self.p1 is not None
