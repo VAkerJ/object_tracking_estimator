@@ -27,4 +27,4 @@ def kmeans(base_image, selected_area, iterC, num_clusters, verbose=1):
 		cv2.imshow("Kmeans output", output)
 		cv2.waitKey(1)
 
-	return output
+	return _, output, selected_area

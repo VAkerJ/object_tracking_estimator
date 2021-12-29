@@ -31,4 +31,4 @@ def contour_detection(base_image, selected_area, verbose=1):
 		cv2.imshow("Contour_Detection output", output)
 		cv2.waitKey(1)
 
-	return output, mask
+	return mask, output, selected_area

@@ -26,7 +26,7 @@ def grab_cut(base_image, selected_area, iterC, verbose=1):
 		cv2.imshow("GrabCut Mask", outputMask)
 		cv2.imshow("GrabCut output", output)
 		cv2.waitKey(1)
-	return outputMask, output
+	return outputMask, output, selected_area
 
 def get_mask(mask):
 

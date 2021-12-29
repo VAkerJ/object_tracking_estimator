@@ -28,8 +28,8 @@ if __name__=="__main__":
 	segmentaion_methods = {"Grab_Cut" : [Grab_Cut, [args["iter"], args["verbose"]]],
 							"Kmeans" : [Kmeans, [args["iter"], args["clusters"], args["verbose"]]],
 							"Contour_Detection" : [Contour_Detection, []]}
-	segment, segArgs = segmentaion_methods[args["segment"]]
-	Segment = lambda image, area: segment(image, area, *segArgs)
+	seg_meth, segArgs = segmentaion_methods[args["segment"]]
+	Segment = lambda image, area: seg_meth(image, area, *segArgs)
 
 	# initiera fönstret och rektangeln som används för val av area
 	rect = Rectangle()
@@ -45,7 +45,7 @@ if __name__=="__main__":
 	count = 0
 	while success:
 		# kolla om rektangeln börjat bli vald och rita isf ut den
-		if rect.is_active():
+		if rect.is_active(): # TODO cleara när man bara clickat
 			p0, p1 = rect.get_points()
 			image = cv2.rectangle(copy(base_image), p0, p1, (0,0,255), 1)
 			if rect.is_finished(): # kolla om rektangeln är klar (m1 släppt)
@@ -55,7 +55,32 @@ if __name__=="__main__":
 
 				#outputMask, output = Grab_Cut(base_image, selected_area, args["iter"])
 				
-				Segment(base_image, selected_area)
+				outputMask, output, new_selected_area = Segment(base_image, selected_area)
+				#outputMask = (outputMask > 0).astype("uint8")
+				print(type(outputMask))
+				print(np.shape(outputMask)) # croppad bin mask
+				print(new_selected_area) # coordinater av bin mask i croppad
+				print(selected_area) # coordinater av bin mask i orginal
+				#indices = np.indices(np.shape(outputMask))
+				#print(np.shape(indices))
+				#print(indices[:,0,1])
+				index_list = []
+				index_tot = [0,0]
+				X = np.shape(outputMask)[1]
+				Y = np.shape(outputMask)[0]
+				for x in range(X):
+					for y in range(Y):
+						if outputMask[y, x] > 0:
+							index_list.append((x, y))
+							index_tot[0] += x
+							index_tot[1] += y
+
+				#index_mean = index_tot//len(index_list)
+				index_mean = (index_tot[0]//len(index_list), index_tot[1]//len(index_list))
+				print(index_mean)
+
+				
+
 				
 
 		cv2.imshow(windowName, image) # visa bilden med eller utan rektangel
