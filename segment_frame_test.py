@@ -73,8 +73,11 @@ if __name__=="__main__":
 							index_tot[0] += x
 							index_tot[1] += y
 
-				index_mean = (index_tot[0]//len(index_list), index_tot[1]//len(index_list))
-				print(index_mean)
+				try:
+					index_mean = (index_tot[0]//len(index_list), index_tot[1]//len(index_list))
+					print(index_mean)
+				except Exception as e:
+					print(e)
 
 				
 

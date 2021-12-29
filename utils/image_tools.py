@@ -19,8 +19,12 @@ class Rectangle():
 		return (x_min, y_min, x_len, y_len)
 
 	def is_active(self):
+		p0, p1 = self.p0, self.p1
 		active = bool(self.p0 is not None)
-		if active: active = bool(self.p0!=self.p1)
+		if p1 is not None:
+			if p0[0] == p1[0] or p0[1] == p1[1]:
+				active = False
+				self.clear()
 		return active
 
 	def is_finished(self):
