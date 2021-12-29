@@ -2,6 +2,8 @@ import cv2
 import argparse
 import os
 import numpy as np
+import filterpy.kalman as kf 
+import filterpy.common as co
 from copy import copy
 
 from utils import Rectangle, Grab_Cut, Kmeans, Contour_Detection
@@ -42,6 +44,19 @@ if __name__=="__main__":
 	success,base_image = vidcap.read()
 	image = base_image
 
+	# Initiera Kalmanfilter
+	k_fil = kf.KalmanFilter(dim_x = 2, dim_z = 2, dim_u = 0) # Vill vi ha med hastighet som state också? isf ska dim_x = 4
+	# x0, y0 = getMeanPosition(mask) 
+	#k_fil.x = np.array([[x0],[y0],[vx0],[vy0]])	# Startposition och hastighet (x0,y0,vx0,vy0)
+	k_fil.F = np.array([[1.,1.],[0.,1.]])   # state transition matrix
+
+	dt = 0.1
+
+	k_fil.H = np.array([[1.,0.]])           # Measurement function
+	k_fil.P *= 1000.                        # covariance matrix
+	k_fil.R = 5                             # state uncertainty
+	k_fil.Q = co.Q_discrete_white_noise(2, dt, .1) # process uncertainty
+
 	count = 0
 	while success:
 		# kolla om rektangeln börjat bli vald och rita isf ut den
@@ -73,11 +88,8 @@ if __name__=="__main__":
 							index_tot[0] += x
 							index_tot[1] += y
 
-				try:
-					index_mean = (index_tot[0]//len(index_list), index_tot[1]//len(index_list))
-					print(index_mean)
-				except Exception as e:
-					print(e)
+				index_mean = (index_tot[0]//len(index_list), index_tot[1]//len(index_list))
+				print(index_mean)
 
 				
 
@@ -95,6 +107,15 @@ if __name__=="__main__":
 			success,base_image = vidcap.read()
 			image = base_image
 			print('Read a new frame: ', success)
+
+			k_fil.predict()
+			#z = getMeasurement(image, mask)
+			#k_fil.update(z)
+			X = k_fil.x # New state estimate
+			P = k_fil.P # Covariance matrix
+
+			#plotEstimate(image,X,P)
+
 			count += 1
 
 	cv2.destroyAllWindows()
