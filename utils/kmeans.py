@@ -6,7 +6,7 @@ from .image_tools import crop_image
 
 def kmeans(base_image, selected_area, iterC, num_clusters, verbose=1):
 	# pre prossessing
-	cropped_image, _ = crop_image(base_image, selected_area, factor=0)
+	cropped_image, _, _ = crop_image(base_image, selected_area, factor=0)
 
 	image = cv2.cvtColor(cropped_image,cv2.COLOR_BGR2RGB)
 	image = np.float32(image.reshape((-1,3)))

@@ -5,9 +5,60 @@ import numpy as np
 import filterpy.kalman as kf 
 import filterpy.common as co
 from copy import copy
+from math import pi
 
 from utils import Rectangle, Grab_Cut, Kmeans, Contour_Detection
 
+def get_measurement(mask, rectangle, prev_measurements):
+
+	mask_info = get_mask_info(mask, rectangle)
+
+	# räkna ut föränding i mätningar
+	# prev bör alltså inte innehålla förra hastigheterna
+	if prev_measurements is not None:
+		delta_measurements = [cur - prev for cur, prev in zip(mask_info, prev_measurements)]
+		delta_measurements = np.asarray(delta_measurements, dtype=np.float32)
+	else:
+		delta_measurements = None
+
+	mask_info = np.asarray(mask_info, dtype=np.float32)
+	
+
+	return mask_info, delta_measurements # borde kanske slå ihop?
+	
+
+def get_indices(mask):
+	index_list = []
+
+	X = np.shape(outputMask)[1]
+	Y = np.shape(outputMask)[0]
+	index_tot = [0,0]
+	for x in range(X):
+		for y in range(Y):
+			if outputMask[y, x] > 0:
+				index_list.append((x, y))
+
+				index_tot[0] += x
+				index_tot[1] += y
+
+	index_amount = len(index_list)
+
+	index_x, index_y = index_tot[0]//index_amount, index_tot[1]//index_amount
+	i_min, i_max = min(index_list), max(index_list)
+
+	return index_list, index_x, index_y, i_min, i_max, index_amount
+
+def get_mask_info(mask, rectangle):
+
+	index_list, index_x, index_y, i_min, i_max, index_amount = get_indices(mask)
+
+	mask_height = i_max[1] - i_min[1]
+	mask_width = i_max[0] - i_min[0]
+	mask_density = index_amount *4/(pi*mask_height*mask_width) # formel för ellipse, kanske bör ändras för att hantera outliers i pixlar?
+
+	index_x, index_y = index_x+rectangle[0], index_y+rectangle[1] # nu jobbar man inte med croppade koordinater längre
+	
+	return index_x, index_y, index_amount, mask_height, mask_width, mask_density
 
 if __name__=="__main__":
 	
@@ -49,6 +100,7 @@ if __name__=="__main__":
 	# x0, y0 = getMeanPosition(mask) 
 	#k_fil.x = np.array([[x0],[y0],[vx0],[vy0]])	# Startposition och hastighet (x0,y0,vx0,vy0)
 	k_fil.F = np.array([[1.,1.],[0.,1.]])   # state transition matrix
+	prev_measurements = None
 
 	dt = 0.1
 
@@ -60,7 +112,7 @@ if __name__=="__main__":
 	count = 0
 	while success:
 		# kolla om rektangeln börjat bli vald och rita isf ut den
-		if rect.is_active(): # TODO cleara när man bara clickat
+		if rect.is_active():
 			p0, p1 = rect.get_points()
 			image = cv2.rectangle(copy(base_image), p0, p1, (0,0,255), 1)
 			if rect.is_finished(): # kolla om rektangeln är klar (m1 släppt)
@@ -70,29 +122,10 @@ if __name__=="__main__":
 
 				#outputMask, output = Grab_Cut(base_image, selected_area, args["iter"])
 				
-				outputMask, output, new_selected_area = Segment(base_image, selected_area)
-				#outputMask = (outputMask > 0).astype("uint8") # TODO fixa denhär jävla skiten
-				print(type(outputMask))
-				print(np.shape(outputMask)) # croppad bin mask
-				print(new_selected_area) # coordinater av bin mask i croppad
-				print(selected_area) # coordinater av bin mask i orginal
+				outputMask, _, new_selected_area = Segment(base_image, selected_area)
 
-				index_list = []
-				index_tot = [0,0]
-				X = np.shape(outputMask)[1]
-				Y = np.shape(outputMask)[0]
-				for x in range(X):
-					for y in range(Y):
-						if outputMask[y, x] > 0:
-							index_list.append((x, y))
-							index_tot[0] += x
-							index_tot[1] += y
-
-				index_mean = (index_tot[0]//len(index_list), index_tot[1]//len(index_list))
-				print(index_mean)
-
-				
-
+				measurements, delta_measurements = get_measurement(outputMask, new_selected_area, prev_measurements) # döp till prev measurements på direkten?
+				print("Measurements\n", measurements, "\nx coor,    y coor,    nr of indices,    height    ,width,    density")
 				
 
 		cv2.imshow(windowName, image) # visa bilden med eller utan rektangel

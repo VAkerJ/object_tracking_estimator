@@ -5,7 +5,7 @@ import numpy as np
 from .image_tools import crop_image
 
 def grab_cut(base_image, selected_area, iterC, verbose=1):
-	image, selected_area = crop_image(base_image, selected_area, factor=2)
+	image, cropped_area, selected_area = crop_image(base_image, selected_area, factor=2)
 
 	# initiera graphcut variabler
 	mask = np.zeros(image.shape[:2], dtype="uint8")
@@ -14,7 +14,7 @@ def grab_cut(base_image, selected_area, iterC, verbose=1):
 	
 	# applicera grab cut
 	start = time.time()
-	(mask, bgModel, fgModel) = cv2.grabCut(image, mask, selected_area,
+	(mask, bgModel, fgModel) = cv2.grabCut(image, mask, cropped_area, \
 	bgModel, fgModel, iterCount=iterC, mode=cv2.GC_INIT_WITH_RECT)
 	end = time.time()
 	print("[INFO] applying GrabCut took {:.2f} seconds".format(end - start))

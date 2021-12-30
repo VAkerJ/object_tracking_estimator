@@ -5,7 +5,7 @@ import numpy as np
 from .image_tools import crop_image
 
 def contour_detection(base_image, selected_area, verbose=1):
-	cropped_image, _ = crop_image(base_image, selected_area, factor=0)
+	cropped_image, _, _ = crop_image(base_image, selected_area, factor=0)
 
 
 	start = time.time()

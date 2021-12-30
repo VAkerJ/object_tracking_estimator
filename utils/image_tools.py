@@ -25,6 +25,7 @@ class Rectangle():
 			if p0[0] == p1[0] or p0[1] == p1[1]:
 				active = False
 				self.clear()
+				print("haha, nøll area")
 		return active
 
 	def is_finished(self):
@@ -58,5 +59,8 @@ def crop_image(base_image, selected_area, factor=0):
 	if y[1] > base_image.shape[0]: y[1] = base_image.shape[0]
 	
 	cropped_image = base_image[y[0]:y[1], x[0]:x[1]]
-	new_selected_area = (x_min-x[0], y_min-y[0], x_len, y_len)
-	return cropped_image, new_selected_area
+
+	cropped_area = (x_min-x[0], y_min-y[0], x_len, y_len)
+	new_selected_area = (x[0], y[0], x_len, y_len)
+
+	return cropped_image, cropped_area, new_selected_area
