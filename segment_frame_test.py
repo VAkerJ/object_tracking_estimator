@@ -2,10 +2,9 @@ import cv2
 import argparse
 import os
 import numpy as np
-from numpy.core.fromnumeric import size
 import filterpy.kalman as kf 
 import filterpy.common as co
-from copy import Error, copy
+from copy import copy
 from math import pi
 
 from utils import Rectangle, Grab_Cut, Kmeans, Contour_Detection
@@ -73,6 +72,7 @@ def main():
 
 				#outputMask, output = Grab_Cut(base_image, selected_area, args["iter"])
 				
+
 				outputMask, _, new_selected_area = Segment(base_image, selected_area)
 				try:
 					measurements, delta_measurements = get_measurement(outputMask, new_selected_area, prev_measurements) # döp till prev measurements på direkten?
@@ -88,6 +88,7 @@ def main():
 
 				k_fil.x = np.array([[x0],[y0],[v_x],[v_y]])
 				#print(k_fil.x)
+
 				
 		
 
