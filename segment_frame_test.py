@@ -61,27 +61,42 @@ def main():
 	count = 0
 	while success:
 		cv2.imshow(windowName, image) # visa bilden med eller utan rektangel
+		
 		# kolla om rektangeln börjat bli vald och rita isf ut den
 		if rect.is_active():
 			p0, p1 = rect.get_points()
 			image = cv2.rectangle(copy(base_image), p0, p1, (0,0,255), 1)
 			if rect.is_finished(): # kolla om rektangeln är klar (m1 släppt)
-				#selected_area = tuple(list(p0) + list(p1))
 				selected_area = rect.get_rec()
 				rect.clear()
-
-				#outputMask, output = Grab_Cut(base_image, selected_area, args["iter"])
 				
+				outputMask, _, new_selected_area, outputIm = Segment(base_image, selected_area)
 
-				outputMask, _, new_selected_area = Segment(base_image, selected_area)
+				# TODO: gör till egen funktion
+				if args["verbose"] > 0:
+					output_images = []
+					for im in outputIm:
+						if len(np.shape(im)) < 3:
+							im = cv2.cvtColor(im, cv2.COLOR_GRAY2BGR)
+						output_images.append(im)
+
+					output_images = np.hstack(output_images)
+					cv2.imshow("output images", output_images)
+					cv2.waitKey(1)
+
+				if args["segment"] == "Kmeans":
+					print("Method not fully implemented for 'Kmeans'")
+					continue
+
 				try:
 					measurements, delta_measurements = get_measurement(outputMask, new_selected_area, prev_measurements) # döp till prev measurements på direkten?
 				except ZeroDivisionError:
 					print('No foreground found, try again')
 					continue
 				#print("Measurements\n", measurements, "\nx coor,    y coor,    nr of indices,    height    ,width,    density")
-				x0, y0 = measurements[0], measurements[1]
 				#print(delta_measurements)
+				x0, y0 = measurements[0], measurements[1]
+
 				if delta_measurements is not None: 
 					v_x, v_y = delta_measurements[0], delta_measurements[1]
 				else: v_x, v_y = 0, 0
