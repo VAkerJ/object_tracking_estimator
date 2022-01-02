@@ -4,7 +4,7 @@ import numpy as np
 
 from .image_tools import crop_image
 
-def kmeans(base_image, selected_area, iterC, num_clusters, verbose=1):
+def kmeans(base_image, selected_area, iterC, num_clusters, verbose=0):
 	# pre prossessing
 	cropped_image, _, _ = crop_image(base_image, selected_area, factor=0)
 
@@ -22,9 +22,10 @@ def kmeans(base_image, selected_area, iterC, num_clusters, verbose=1):
 	res = np.uint8(center[label.flatten()])
 	output = res.reshape((cropped_image.shape))
 
-	if verbose > 0:
+	if verbose > 1:
 		cv2.imshow("Cropped image", cropped_image)
 		cv2.imshow("Kmeans output", output)
 		cv2.waitKey(1)
 
-	return _, output, selected_area
+	outputIm = [cropped_image, output]
+	return _, output, selected_area, outputIm

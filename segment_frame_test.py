@@ -122,10 +122,25 @@ if __name__=="__main__":
 
 				#outputMask, output = Grab_Cut(base_image, selected_area, args["iter"])
 				
-				outputMask, _, new_selected_area = Segment(base_image, selected_area)
+				outputMask, _, new_selected_area, outputIm = Segment(base_image, selected_area)
 
-				measurements, delta_measurements = get_measurement(outputMask, new_selected_area, prev_measurements) # döp till prev measurements på direkten?
-				print("Measurements\n", measurements, "\nx coor,    y coor,    nr of indices,    height    ,width,    density")
+				#outputIm = np.concatenate(outputIm, axis=1)
+				if args["verbose"] > 0:
+					output_images = []
+					for im in outputIm:
+						if len(np.shape(im)) < 3:
+							im = cv2.cvtColor(im, cv2.COLOR_GRAY2BGR)
+						output_images.append(im)
+
+					output_images = np.hstack(output_images)
+					cv2.imshow("output images", output_images)
+					cv2.waitKey(1)
+
+				if args["segment"] != "Kmeans":
+					measurements, delta_measurements = get_measurement(outputMask, new_selected_area, prev_measurements) # döp till prev measurements på direkten?
+					print("Measurements\n", measurements, "\nx coor,    y coor,    nr of indices,    height    ,width,    density")
+				else:
+					print("Method not fully implemented for 'Kmeans'")
 				
 
 		cv2.imshow(windowName, image) # visa bilden med eller utan rektangel
