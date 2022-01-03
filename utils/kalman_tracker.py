@@ -41,6 +41,12 @@ class Tracker():
 			outputIm.append(measurement_im)
 			Tracker.show_segmentation(outputIm)
 
+		# ritar ut rektangeln i stora output-bilden tsm med punkt för center och estimerat center
+		center_measured = (int(measurements[0]), int(measurements[1]))
+		center_estimate = self.filter.get_center_est()
+
+		image = Tracker.draw_box_with_center(copy(base_image), selected_area, center_measured, center_estimate)
+
 		# updatera filtret?
 		self.update_filter(measurements, delta_measurements) # TODO: anderberg, gör din grej
 		# updatera var rektangeln är
@@ -48,24 +54,6 @@ class Tracker():
 
 		self.prev_measurements = measurements
 
-
-
-		# ritar ut rektangeln i stora output-bilden
-		p0 = selected_area[0:2]
-		p1 = (selected_area[0]+selected_area[2], selected_area[1]+selected_area[3])
-		#----------------------------------------------------##TODO SNYGGA TILL
-		image = cv2.rectangle(copy(base_image), p0, p1, (0,0,255), 1)
-		center_coordinates = (int(measurements[0]), int(measurements[1]))
-		radius = 1
-		color = (0,255,0)
-		thickness = 1
-		image = cv2.circle(image, center_coordinates, radius, color, thickness)
-
-		center_coordinates = self.filter.get_center_est()
-		print(center_coordinates)
-		color = (255,0,0)
-		image = cv2.circle(image, center_coordinates, radius, color, thickness)
-		#----------------------------------------------------##
 		return success, image
 
 	def update_filter(self, measurements, delta_measurements):
@@ -152,6 +140,7 @@ class Tracker():
 	# illustrativa metoder
 	@staticmethod
 	def illustrate_measurements(image, measurements, offset=[0,0]):
+		# for drawing drawing the cropped images and masks in the small window
 		x = int(measurements[0] - offset[0])
 		y = int(measurements[1] - offset[1])
 		size = tuple([int(c) for c in measurements[3:5]])
@@ -177,5 +166,24 @@ class Tracker():
 		output_images = np.hstack(output_images)
 		cv2.imshow(windowName, output_images)
 		cv2.waitKey(1)
+
+	@staticmethod
+	def draw_box_with_center(image, selected_area, center1, center2):
+		# for drawing the box with estimated and measured center in the large outputwindow
+		p0 = selected_area[0:2]
+		p1 = (selected_area[0]+selected_area[2], selected_area[1]+selected_area[3])
+
+		image = cv2.rectangle(image, p0, p1, (0,0,255), 1)
+
+		radius = 1
+		thickness = 1
+		color = (0,255,0)
+
+		image = cv2.circle(image, center1, radius, color, thickness)
+
+		color = (255,0,0)
+		image = cv2.circle(image, center2, radius, color, thickness)
+
+		return image
 
 	
