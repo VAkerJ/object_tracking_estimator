@@ -1,3 +1,4 @@
+
 class Rectangle():
 	def __init__(self):
 		self.p0, self.p1, self.ptemp = None, None, None
@@ -57,10 +58,13 @@ def crop_image(base_image, selected_area, factor=0):
 	if y[0] < 0: y[0] = 0
 	if x[1] > base_image.shape[1]: x[1] = base_image.shape[1]
 	if y[1] > base_image.shape[0]: y[1] = base_image.shape[0]
-	
+
 	cropped_image = base_image[y[0]:y[1], x[0]:x[1]]
 
 	cropped_area = (x_min-x[0], y_min-y[0], x_len, y_len)
 	new_selected_area = (x[0], y[0], x_len, y_len)
 
 	return cropped_image, cropped_area, new_selected_area
+
+
+
