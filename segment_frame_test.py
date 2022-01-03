@@ -8,7 +8,7 @@ from copy import copy
 from math import pi
 
 from utils import Rectangle, Grab_Cut, Kmeans, Contour_Detection, Kalman_Tracker
-Get_Measurements = Kalman_Tracker.get_measurements # för att det ska funka exakt som tidigare
+Get_Measurements = Kalman_Tracker.get_measurements # för att det ska funka som tidigare
 
 
 def main():
