@@ -26,6 +26,7 @@ class Filter():
 		x0, y0 = measurements[0], measurements[1]
 		v_x, v_y = delta_measurements[0], delta_measurements[1]
 		self.k_fil.x = np.array([[x0],[y0],[v_x],[v_y]])
+		self.center_est = (x0, y0)
 
 	def update(self, measurements, delta_measurements):
 		z = measurements[0:2]
@@ -46,8 +47,12 @@ class Filter():
 		selected_area = (x_min, y_min, x_len, y_len)
 
 		self.selected_area = selected_area
+		self.center_est = tuple(center_est)
 
 	def get_new_area(self):
 		return self.selected_area
+
+	def get_center_est(self):
+		return self.center_est
 
 		
