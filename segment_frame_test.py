@@ -7,7 +7,8 @@ import filterpy.common as co
 from copy import copy
 from math import pi
 
-from utils import Rectangle, Grab_Cut, Kmeans, Contour_Detection
+from utils import Rectangle, Grab_Cut, Kmeans, Contour_Detection, Kalman_Tracker
+Get_Measurements = Kalman_Tracker.get_measurements # för att det ska funka exakt som tidigare
 
 
 def main():
@@ -89,7 +90,7 @@ def main():
 					continue
 
 				try:
-					measurements, delta_measurements = get_measurement(outputMask, new_selected_area, prev_measurements) # döp till prev measurements på direkten?
+					_, measurements, delta_measurements = Get_Measurements(outputMask, new_selected_area, prev_measurements) # döp till prev measurements på direkten?
 				except ZeroDivisionError:
 					print('No foreground found, try again')
 					continue
@@ -119,7 +120,7 @@ def main():
 			print('Read a new frame: ', success)
 			
 			try:
-				measurements, delta_measurements = get_measurement(outputMask, new_selected_area, prev_measurements) # döp till prev measurements på direkten?
+				_, measurements, delta_measurements = Get_Measurements(outputMask, new_selected_area, prev_measurements) # döp till prev measurements på direkten?
 			except:
 				print('No rectangle drawn')
 				continue
@@ -141,56 +142,7 @@ def main():
 	cv2.destroyAllWindows()
 
 
-def get_measurement(mask, rectangle, prev_measurements):
-	
-	mask_info = get_mask_info(mask, rectangle)
 
-	# räkna ut föränding i mätningar
-	# prev bör alltså inte innehålla förra hastigheterna
-	if prev_measurements is not None:
-		delta_measurements = [cur - prev for cur, prev in zip(mask_info, prev_measurements)]
-		delta_measurements = np.asarray(delta_measurements, dtype=np.float32)
-	else:
-		delta_measurements = None
-
-	mask_info = np.asarray(mask_info, dtype=np.float32)
-
-	return mask_info, delta_measurements # borde kanske slå ihop?
-	
-
-def get_indices(mask):
-	index_list = []
-	X = np.shape(mask)[1]
-	Y = np.shape(mask)[0]
-	index_tot = [0,0]
-	for x in range(X):
-		for y in range(Y):
-			mask[y,x] > 0
-			if (mask[y,x] > 0).any(): # Oklart varför .any() behövs när mask[y,x] är 1x1
-				index_list.append((x,y))
-
-				index_tot[0] += x
-				index_tot[1] += y
-
-	index_amount = len(index_list)
-	#if index_amount == 0: raise Exception('No foreground found :(')
-	index_x, index_y = index_tot[0]//index_amount, index_tot[1]//index_amount
-	i_min, i_max = min(index_list), max(index_list)
-
-	return index_list, index_x, index_y, i_min, i_max, index_amount
-
-
-def get_mask_info(mask, rectangle):
-
-	index_list, index_x, index_y, i_min, i_max, index_amount = get_indices(mask)
-
-	mask_height = i_max[1] - i_min[1]
-	mask_width = i_max[0] - i_min[0]
-	mask_density = index_amount *4/(pi*mask_height*mask_width) # formel för ellipse, kanske bör ändras för att hantera outliers i pixlar?
-
-	index_x, index_y = index_x+rectangle[0], index_y+rectangle[1] # nu jobbar man inte med croppade koordinater längre
-	
-	return index_x, index_y, index_amount, mask_height, mask_width, mask_density
 
 
 if __name__=="__main__":
