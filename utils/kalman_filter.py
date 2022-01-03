@@ -5,7 +5,7 @@ import numpy as np
 
 class Filter():
 
-	def __init__(self, measurements, delta_measurements): # TODO: flytta till egen skript (kalman.py?)
+	def __init__(self, measurements, delta_measurements): 
 		dt = 0.1
 		k_fil = kf.KalmanFilter(dim_x = 4, dim_z = 2, dim_u = 2) 
 		k_fil.F = np.array([[1.,0.,dt,0.], 		# state transition matrix
@@ -14,15 +14,15 @@ class Filter():
 							[0.,0.,0.,0.]])   
 		k_fil.H = np.array([[1.,0.,0.,0.],		# Measurement function
 							[0.,1.,0.,0.]])    	
-		k_fil.B = np.array([[0.,0.]				# Control transition matrix
-							[0.,0.]
-							[1.,0.]
+		k_fil.B = np.array([[0.,0.],			# Control transition matrix
+							[0.,0.],
+							[1.,0.],
 							[0.,1.]])
 		k_fil.P *= 1000.                   		# Covariance matrix
 		k_fil.Q = co.Q_discrete_white_noise(4,dt,.1) 	# Process uncertainty/noise
-		k_fil.R = np.array([[1.,0.],			# Measurment uncertainty/noise
-							[0.,1.]]).multiply(5)		
-		
+		k_fil.R = np.multiply(5,np.array([[1.,0.],		# Measurment uncertainty/noise
+										  [0.,1.]]))		
+
 		self.dt, self.k_fil, self.prev_measurements = dt, k_fil, None
 		self.set_x(measurements, delta_measurements)
 
@@ -33,9 +33,13 @@ class Filter():
 		self.center_est = (int(x0), int(y0))
 
 	def update(self, measurements, delta_measurements):
+		u = delta_measurements[0:2]
+		u = np.array([u]).T
+		self.k_fil.predict(u)
 		z = measurements[0:2]
-		self.k_fil.predict()
 		self.k_fil.update(z)
+		print(self.k_fil.x)
+		
 
 	def set_selected_area(self, selected_area):
 		P = []
