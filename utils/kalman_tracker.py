@@ -44,7 +44,7 @@ class Tracker():
 		# ritar ut rektangeln i stora output-bilden tsm med punkt för center och estimerat center
 		center_measured = (int(measurements[0]), int(measurements[1]))
 		center_estimate = self.filter.get_center_est()
-		print(center_estimate)
+
 		image = Tracker.draw_box_with_center(copy(base_image), selected_area, center_measured, center_estimate)
 
 		# updatera filtret?
