@@ -27,7 +27,11 @@ def main(filepath, Segment, wait, verbose):
 			if type(input_check) is tuple:
 				image, selected_area, measurements, delta_measurements = input_check
 			else:
-				image = input_check				
+				image = input_check
+				try:
+					del selected_area
+				except:
+					pass
 
 		# stoppa eller starta spårning beroende på space eller esc
 		k = cv2.waitKey(1)
@@ -40,7 +44,9 @@ def main(filepath, Segment, wait, verbose):
 			try:
 				selected_area
 			except NameError:
-				print('No rectangle drawn, try again')
+				success,base_image = video.read()
+				image = copy(base_image)
+				print('Read a new frame: ', success)
 				continue
 			else:
 				break
@@ -48,7 +54,7 @@ def main(filepath, Segment, wait, verbose):
 	# Initiera Kalmanfilter och tracker
 	kalman_tracker = Kalman_Tracker(Segment, Kalman_Filter(measurements, delta_measurements), selected_area, verbose)
 
-	# initiera input fönstret och cv2 trackern att jämföra med
+	# initiera output fönstret och cv2 trackern att jämföra med
 	cv2_tracker = CV2_Tracker(base_image, selected_area)
 	outputWindow = "Output window"
 	cv2.namedWindow(outputWindow)	
@@ -78,7 +84,7 @@ def main(filepath, Segment, wait, verbose):
 			print('Read a new frame: ', success)
 
 
-	cv2.waitKey(0)
+	cv2.waitKey(0) # TODO: fixa snyggare
 	on_exit(video)
 
 

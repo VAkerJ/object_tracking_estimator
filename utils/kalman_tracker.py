@@ -49,7 +49,7 @@ class Tracker():
 		# updatera filtret?
 		self.update_filter(measurements, delta_measurements) # TODO: anderberg, gör din grej
 		# updatera var rektangeln är
-		self.update_selected_area() # TODO: gör bättre?
+		self.update_selected_area(measurements, delta_measurements) # TODO: gör bättre?
 
 		self.prev_measurements = measurements
 		return success, image
@@ -57,7 +57,7 @@ class Tracker():
 	def update_filter(self, measurements, delta_measurements):
 		self.filter.update(measurements, delta_measurements)
 
-	def update_selected_area(self): # metod för att flytta den valda rutan
+	def update_selected_area(self, measurements, delta_measurements): # metod för att flytta den valda rutan
 		#x, y, width, height = self.selected_area
 		#x = int(measurements[0] - width/2 + delta_measurements[0])
 		#y = int(measurements[1] - height/2 + delta_measurements[1])
