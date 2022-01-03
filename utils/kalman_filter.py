@@ -12,13 +12,17 @@ class Filter():
 							[0.,1.,0.,dt],
 							[0.,0.,0.,0.],
 							[0.,0.,0.,0.]])   
-		k_fil.H = np.array([[1.,0.,0.,0.],
-							[0.,1.,0.,0.]])    	# Measurement function
-		P0 = 1000.
-		k_fil.P *= P0                        # Covariance matrix
-		k_fil.R = 5                             # State uncertainty
-		k_fil.Q = co.Q_discrete_white_noise(4, dt, .1) # Process uncertainty
-
+		k_fil.H = np.array([[1.,0.,0.,0.],		# Measurement function
+							[0.,1.,0.,0.]])    	
+		k_fil.B = np.array([[0.,0.]				# Control transition matrix
+							[0.,0.]
+							[1.,0.]
+							[0.,1.]])
+		k_fil.P *= 1000.                   		# Covariance matrix
+		k_fil.Q = co.Q_discrete_white_noise(4,dt,.1) 	# Process uncertainty/noise
+		k_fil.R = np.array([[1.,0.],			# Measurment uncertainty/noise
+							[0.,1.]]).multiply(5)		
+		
 		self.dt, self.k_fil, self.prev_measurements = dt, k_fil, None
 		self.set_x(measurements, delta_measurements)
 
