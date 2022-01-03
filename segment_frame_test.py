@@ -52,92 +52,108 @@ def main():
 						[0.,0.,0.,0.]])   
 	k_fil.H = np.array([[1.,0.,0.,0.],
 						[0.,1.,0.,0.]])    	# Measurement function
-	k_fil.P *= 1000.                        # Covariance matrix
+	P0 = 1000.
+	k_fil.P *= P0                        # Covariance matrix
 	k_fil.R = 5                             # State uncertainty
 	k_fil.Q = co.Q_discrete_white_noise(4, dt, .1) # Process uncertainty
 	prev_measurements = None
 	#print(k_fil)
 
-	count = 0
+	count = 1
+	tracking = False
 	while success:
-		cv2.imshow(windowName, image) # visa bilden med eller utan rektangel
 		
-		# kolla om rektangeln börjat bli vald och rita isf ut den
-		if rect.is_active():
-			p0, p1 = rect.get_points()
-			image = cv2.rectangle(copy(base_image), p0, p1, (0,0,255), 1)
-			if rect.is_finished(): # kolla om rektangeln är klar (m1 släppt)
-				selected_area = rect.get_rec()
-				rect.clear()
-				
-				outputMask, _, new_selected_area, outputIm = Segment(base_image, selected_area)
-
-				# TODO: gör till egen funktion
-				if args["verbose"] > 0:
-					output_images = []
-					for im in outputIm:
-						if len(np.shape(im)) < 3:
-							im = cv2.cvtColor(im, cv2.COLOR_GRAY2BGR)
-						output_images.append(im)
-
-					output_images = np.hstack(output_images)
-					cv2.imshow("output images", output_images)
-					cv2.waitKey(1)
-
-				if args["segment"] == "Kmeans":
-					print("Method not fully implemented for 'Kmeans'")
-					continue
-
-				try:
-					measurements, delta_measurements = get_measurement(outputMask, new_selected_area, prev_measurements) # döp till prev measurements på direkten?
-				except ZeroDivisionError:
-					print('No foreground found, try again')
-					continue
-				#print("Measurements\n", measurements, "\nx coor,    y coor,    nr of indices,    height    ,width,    density")
-				#print(delta_measurements)
-				x0, y0 = measurements[0], measurements[1]
-
-				if delta_measurements is not None: 
-					v_x, v_y = delta_measurements[0], delta_measurements[1]
-				else: v_x, v_y = 0, 0
-
-				k_fil.x = np.array([[x0],[y0],[v_x],[v_y]])
-				#print(k_fil.x)
-
-				
-		
-
-		# stoppa eller gå till nästa frame beroende på space eller esc
 		k = cv2.waitKey(1)
+
 		if k%256 == 27:
 			print("Excape hit, closing...")
 			break
-
-		if k%256 == 32:
+		
+		if k%256 == 32 or tracking:
 			success,base_image = vidcap.read()
 			image = copy(base_image)
-			print('Read a new frame: ', success)
+			print('Read frame ', count, ' : ', success)
+			count += 1
 			
-			try:
-				measurements, delta_measurements = get_measurement(outputMask, new_selected_area, prev_measurements) # döp till prev measurements på direkten?
-			except:
-				print('No rectangle drawn')
-				continue
-			z = measurements[0:2]
+		if not tracking:
+			# kolla om rektangeln börjat bli vald och rita isf ut den
+			if rect.is_active():
+				p0, p1 = rect.get_points()
+				image = cv2.rectangle(copy(base_image), p0, p1, (0,0,255), 1)
+				if rect.is_finished(): # kolla om rektangeln är klar (m1 släppt)
+					selected_area = rect.get_rec()
+					rect.clear()
 
+					outputMask, _, new_selected_area, outputIm = Segment(base_image, selected_area)
+
+					# TODO: gör till egen funktion
+					if args["verbose"] > 0:
+						output_images = []
+						for im in outputIm:
+							if len(np.shape(im)) < 3:
+								im = cv2.cvtColor(im, cv2.COLOR_GRAY2BGR)
+							output_images.append(im)
+
+						output_images = np.hstack(output_images)
+						cv2.imshow("output images", output_images)
+						cv2.waitKey(1)
+
+					if args["segment"] == "Kmeans":
+						print("Method not fully implemented for 'Kmeans'")
+						continue
+
+					try:
+						measurements, delta_measurements = get_measurement(outputMask, new_selected_area, prev_measurements) # döp till prev measurements på direkten?
+					except ZeroDivisionError:
+						print('No foreground found, try again')
+						tracking = False
+						continue
+					#print("Measurements\n", measurements, "\nx coor,    y coor,    nr of indices,    height    ,width,    density")
+					#print(delta_measurements)
+					tracking = True
+					x0, y0 = measurements[0], measurements[1]
+
+					if delta_measurements is not None: 
+						v_x, v_y = delta_measurements[0], delta_measurements[1]
+					else: v_x, v_y = 0, 0
+
+					k_fil.x = np.array([[x0],[y0],[v_x],[v_y]])
+					#print(k_fil.x)
+
+		if tracking:
+			prev_measurements = measurements
+			try:
+				measurements, delta_measurements = get_measurement(outputMask, new_selected_area, prev_measurements)
+			except:
+				print('No foreground found in the rectangle')
+				continue
+			
+			z = measurements[0:2]
 			k_fil.predict()
 			k_fil.update(z)
-			X = k_fil.x # New state estimate
-			P = k_fil.P # Covariance matrix
-			X = X.astype(int)
-			# print(X, type(X))
-			# print(type(X[0]))
-			center_est = (int(X[0]),int(X[1]))
-			# print(center_est)
-			image = cv2.circle(image,center_est,20,(255,0,0),2)
+			P = [] # Covariance matrix
+			X = [] # State matrix
+			for i in range(len(k_fil.x)):
+				X.append(int(k_fil.x[i]))
+				P.append(float(k_fil.P.diagonal()[i]))
+			center_est = X[0:2]
+			image = cv2.circle(image,tuple(center_est),20,(255,0,0),1)
 
-			count += 1
-
+			# Update rectangle (foreground area of interest)
+			(x_min, y_min, x_len, y_len) = selected_area
+			# x_len = int(x_len*P[0])
+			# y_len = int(y_len*1.1)
+			x_min = int(center_est[0] - x_len/2)
+			y_min = int(center_est[1] - y_len/2)
+			selected_area = (x_min, y_min, x_len, y_len)
+			print(selected_area)
+			p0 = (x_min, y_min + y_len)
+			p1 = (x_min + x_len, y_min)
+			image = cv2.rectangle(image, p0, p1, (0,0,255), 1)
+			
+		
+		cv2.imshow(windowName, image) # visa bilden med eller utan rektangel
+		
 	cv2.destroyAllWindows()
 
 
