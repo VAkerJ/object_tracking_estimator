@@ -101,7 +101,6 @@ class Tracker():
 		index_tot = [0,0]
 		for x in range(X):
 			for y in range(Y):
-				mask[y,x] > 0
 				if (mask[y,x] > 0).any(): # Oklart varför .any() behövs när mask[y,x] är 1x1
 					index_list.append((x,y))
 
