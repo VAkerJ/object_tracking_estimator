@@ -26,7 +26,7 @@ class Filter():
 		x0, y0 = measurements[0], measurements[1]
 		v_x, v_y = delta_measurements[0], delta_measurements[1]
 		self.k_fil.x = np.array([[x0],[y0],[v_x],[v_y]])
-		self.center_est = (x0, y0)
+		self.center_est = (int(x0), int(y0))
 
 	def update(self, measurements, delta_measurements):
 		z = measurements[0:2]
