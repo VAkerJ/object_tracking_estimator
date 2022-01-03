@@ -63,8 +63,6 @@ def main():
 	count = 1
 	tracking = False
 	while success:
-<<<<<<< HEAD
-=======
 		cv2.imshow(windowName, image) # visa bilden med eller utan rektangel
 		
 		# kolla om rektangeln börjat bli vald och rita isf ut den
@@ -110,7 +108,6 @@ def main():
 				#print(k_fil.x)
 
 				
->>>>>>> b4818827fb2429467edd7ab4493a7a2307313bb1
 		
 		k = cv2.waitKey(1)
 
@@ -152,7 +149,7 @@ def main():
 						continue
 
 					try:
-						measurements, delta_measurements = get_measurement(outputMask, new_selected_area, prev_measurements) # döp till prev measurements på direkten?
+						measurements, delta_measurements = Get_Measurements(outputMask, new_selected_area, prev_measurements) # döp till prev measurements på direkten?
 					except ZeroDivisionError:
 						print('No foreground found, try again')
 						tracking = False
@@ -172,11 +169,7 @@ def main():
 		if tracking:
 			prev_measurements = measurements
 			try:
-<<<<<<< HEAD
-				measurements, delta_measurements = get_measurement(outputMask, new_selected_area, prev_measurements)
-=======
 				_, measurements, delta_measurements = Get_Measurements(outputMask, new_selected_area, prev_measurements) # döp till prev measurements på direkten?
->>>>>>> b4818827fb2429467edd7ab4493a7a2307313bb1
 			except:
 				print('No foreground found in the rectangle')
 				continue
