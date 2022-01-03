@@ -1,5 +1,4 @@
 import filterpy.kalman as kf 
-import filterpy.common as co
 import numpy as np
 
 
@@ -7,6 +6,8 @@ class Filter():
 
 	def __init__(self, measurements, delta_measurements): 
 		dt = 0.1
+		process_var = 10
+		measurement_var = 10
 		k_fil = kf.KalmanFilter(dim_x = 4, dim_z = 2, dim_u = 2) 
 		k_fil.F = np.array([[1.,0.,dt,0.], 		# state transition matrix
 							[0.,1.,0.,dt],
@@ -19,12 +20,12 @@ class Filter():
 							[1.,0.],
 							[0.,1.]])
 		k_fil.P *= 1000.                   		# Covariance matrix
-		k_fil.Q = co.Q_discrete_white_noise(4,dt,.1) 	# Process uncertainty/noise
-		k_fil.R = np.multiply(5,np.array([[1.,0.],		# Measurment uncertainty/noise
-										  [0.,1.]]))		
+		k_fil.Q = np.diag(np.random.standard_normal(4))*process_var 	# Process uncertainty/noise (variance)
+		k_fil.R = np.diag(np.random.standard_normal(2))*measurement_var	# Measurment uncertainty/noise (variance)
 
 		self.dt, self.k_fil, self.prev_measurements = dt, k_fil, None
 		self.set_x(measurements, delta_measurements)
+		print(k_fil)
 
 	def set_x(self, measurements, delta_measurements):
 		x0, y0 = measurements[0], measurements[1]
@@ -38,7 +39,9 @@ class Filter():
 		self.k_fil.predict(u)
 		z = measurements[0:2]
 		self.k_fil.update(z)
-		print(self.k_fil.x)
+		print(self.k_fil.x,'\n')
+		print(self.k_fil.K)
+
 		
 
 	def set_selected_area(self, selected_area):
