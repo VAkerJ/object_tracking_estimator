@@ -4,6 +4,8 @@ import os
 import numpy as np
 from copy import copy
 
+from datetime import datetime as dt
+
 from utils import Rectangle, Grab_Cut, Kmeans, Contour_Detection, CV2_Tracker, Kalman_Tracker, Kalman_Filter
 
 def main(filepath, Segment, wait, verbose):
@@ -52,29 +54,33 @@ def main(filepath, Segment, wait, verbose):
 				break
 
 	# Initiera Kalmanfilter och tracker
-	kalman_tracker = Kalman_Tracker(Segment, Kalman_Filter(measurements, delta_measurements), selected_area, verbose)
+	kalman_tracker = Kalman_Tracker(Segment, Kalman_Filter(measurements, delta_measurements, selected_area), selected_area, verbose)
 
 	# initiera output fönstret och cv2 trackern att jämföra med
 	cv2_tracker = CV2_Tracker(base_image, selected_area)
 	outputWindow = "Output window"
-	cv2.namedWindow(outputWindow)	
+	cv2.namedWindow(outputWindow)
 
-	c = int(not wait) # vänta på tangenttryck mellan varje bild ifall wait=true
+	K = int(not wait) # vänta på tangenttryck mellan varje bild ifall wait=true
 	while success:
 		
-
+		a = dt.now() # tidtagning
 		success, image = kalman_tracker.update(copy(base_image))
 		if not success: break
 
+		b = dt.now() # tidtagning
 		_, cv2_tracker_im = cv2_tracker.update(copy(base_image))
+		c = dt.now() # tidtagning
+
+		cv2.putText(image, "Time taken for update step:{} ms".format((b-a).microseconds//1000), (10,20), cv2.FONT_HERSHEY_PLAIN, 1.25,(0,0,255),2)
+		cv2.putText(cv2_tracker_im, "Time taken for update step:{} ms".format((c-b).microseconds//1000), (10,20), cv2.FONT_HERSHEY_PLAIN, 1.25,(255,0,0),2)
 
 		output_images = np.vstack([image, cv2_tracker_im])
 		cv2.imshow(outputWindow, output_images)
 
 		# stoppa eller gå till nästa frame beroende på space eller esc
-		k = cv2.waitKey(c)
+		k = cv2.waitKey(K)
 		if k%256 == 27:
-			success = False
 			print("Excape hit, closing...")
 			break
 
@@ -83,8 +89,9 @@ def main(filepath, Segment, wait, verbose):
 			image = copy(base_image)
 			print('Read a new frame: ', success)
 
-
-	cv2.waitKey(0) # TODO: fixa snyggare
+	if k%256 != 27:
+		print("Printing error data")
+		cv2.waitKey(0) # TODO: fixa snyggare
 	on_exit(video)
 
 
