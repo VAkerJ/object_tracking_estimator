@@ -6,22 +6,20 @@ class Filter():
 
 	def __init__(self, measurements, delta_measurements): 
 		dt = 0.1
-		process_var = 1
-		measurement_var = 0.1
+		process_var = 10
+		measurement_var = 0.5
 		k_fil = kf.KalmanFilter(dim_x = 4, dim_z = 2, dim_u = 2) 
-		k_fil.F = np.array([[1.,0.,dt,0.], 		# state transition matrix
+		k_fil.F = np.array([[1.,0.,dt,0.], 	# State transition matrix
 							[0.,1.,0.,dt],
-							[0.,0.,1.,0.],
-							[0.,0.,0.,1.]])   
-		k_fil.H = np.array([[1.,0.,0.,0.],		# Measurement function
+							[0.,0.,0.,0.],
+							[0.,0.,0.,0.]])   
+		k_fil.H = np.array([[1.,0.,0.,0.],	# Measurement function
 							[0.,1.,0.,0.]])    	
-		k_fil.B = np.array([[0.,0.],			# Control transition matrix
+		k_fil.B = np.array([[0.,0.],		# Control transition matrix
 							[0.,0.],
 							[1.,0.],
 							[0.,1.]])
-		k_fil.P *= 1000.                   		# Covariance matrix
-		# k_fil.Q = np.diag(np.random.standard_normal(4))*process_var 	# Process uncertainty/noise (variance)
-		# k_fil.R = np.diag(np.random.standard_normal(2))*measurement_var	# Measurment uncertainty/noise (variance)
+		k_fil.P *= 1000.                   	# Covariance matrix
 		k_fil.Q = np.eye(4)*process_var 	# Process uncertainty/noise (variance)
 		k_fil.R = np.eye(2)*measurement_var	# Measurment uncertainty/noise (variance)
 		self.dt, self.k_fil, self.prev_measurements = dt, k_fil, None
