@@ -1,5 +1,6 @@
 import filterpy.kalman as kf 
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 class Filter():
@@ -7,7 +8,7 @@ class Filter():
 	def __init__(self, measurements, delta_measurements): 
 		dt = 0.1
 		process_var = 10
-		measurement_var = 0.5
+		measurement_var = 1
 		k_fil = kf.KalmanFilter(dim_x = 4, dim_z = 2, dim_u = 2) 
 		k_fil.F = np.array([[1.,0.,dt,0.], 	# State transition matrix
 							[0.,1.,0.,dt],
@@ -25,6 +26,7 @@ class Filter():
 		self.dt, self.k_fil, self.prev_measurements = dt, k_fil, None
 		self.delta_measurements = delta_measurements
 		self.set_x(measurements, delta_measurements)
+		self.data = [[],[]]	# Covariance and Kalman gain
 		# print(k_fil)
 
 	def set_x(self, measurements, delta_measurements):
@@ -39,8 +41,8 @@ class Filter():
 		self.k_fil.predict(u)
 		z = measurements[0:2]
 		self.k_fil.update(z)
-		# print(self.k_fil.x,'\n')
-		# print(self.k_fil.K)
+		self.data[0].append(list(np.diag(self.k_fil.P_post)[0:1])[0])
+		self.data[1].append(self.k_fil.K[0][0])
 		self.delta_measurements = delta_measurements
 
 	def set_selected_area(self, selected_area):
@@ -53,7 +55,6 @@ class Filter():
 		(x_min, y_min, x_len, y_len) = selected_area
 
 		delta_density = self.delta_measurements[5]
-		print(delta_density)
 		dxy = 1
 		lim = 0
 		if delta_density > lim:
@@ -63,7 +64,6 @@ class Filter():
 			x_len -= dxy
 			y_len -= dxy
 		
-		print(x_len,y_len)
 
 		x_min = int(center_est[0] - x_len/2)
 		y_min = int(center_est[1] - y_len/2)
@@ -77,5 +77,20 @@ class Filter():
 
 	def get_center_est(self):
 		return self.center_est
+
+	def plotData(self):
+		data = self.data
+		iterations = range(len(data[0]))
+		fig, axs= plt.subplots(ncols=2)
+		plt.grid()
+		axs[0].scatter(iterations, data[0], linewidth=1.0)
+		axs[1].plot(iterations, data[1], linewidth=1.0)
+		axs[0].set(ylim=(0, 1.1))
+		axs[1].set(ylim=(0, 1.1))
+		axs[0].set_xlabel('Number of iterations')
+		axs[0].set_ylabel('Covariance')
+		axs[1].set_xlabel('Number of iterations')
+		axs[0].set_ylabel('Kalman gain')
+		plt.show()
 
 		

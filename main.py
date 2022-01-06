@@ -53,6 +53,7 @@ def main(filepath, Segment, wait, verbose):
 
 	# Initiera Kalmanfilter och tracker
 	kalman_tracker = Kalman_Tracker(Segment, Kalman_Filter(measurements, delta_measurements), selected_area, verbose)
+	data = [[],[]]
 
 	# initiera output fönstret och cv2 trackern att jämföra med
 	cv2_tracker = CV2_Tracker(base_image, selected_area)
@@ -65,7 +66,12 @@ def main(filepath, Segment, wait, verbose):
 
 		success, image = kalman_tracker.update(copy(base_image))
 		if not success: break
-
+		# kf = kalman_tracker.filter
+		
+		# kf.data[0].append(list(np.diag(kf.k_fil.P_post)[0:1])[0])
+		# kf.data[1].append(kf.k_fil.K[0][0])
+		# print(kf.data[0][-1],kf.data[1][-1])
+		
 		_, cv2_tracker_im = cv2_tracker.update(copy(base_image))
 
 		output_images = np.vstack([image, cv2_tracker_im])
@@ -83,6 +89,8 @@ def main(filepath, Segment, wait, verbose):
 			image = copy(base_image)
 			print('Read a new frame: ', success)
 
+
+	kalman_tracker.filter.plotData()
 
 	cv2.waitKey(0) # TODO: fixa snyggare
 	on_exit(video)
