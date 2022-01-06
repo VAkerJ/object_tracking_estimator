@@ -11,6 +11,9 @@ class Tracker():
 		self.verbose = verbose
 		self.selected_area = selected_area
 
+		self.segment_window = "Segmentation"
+		cv2.namedWindow(self.segment_window, cv2.WINDOW_NORMAL)
+
 	def update(self, base_image):
 		selected_area = self.selected_area
 
@@ -27,7 +30,7 @@ class Tracker():
 		if self.verbose > 0:
 			measurement_im = Tracker.illustrate_measurements(copy(outputIm[0]), measurements, cropped_selected_area[0:2])
 			outputIm.append(measurement_im)
-			Tracker.show_segmentation(outputIm)
+			Tracker.show_segmentation(outputIm, self.segment_window)
 
 		# ritar ut rektangeln i stora output-bilden tsm med punkt för center och estimerat center
 		center_measured = (int(measurements[0]), int(measurements[1]))
@@ -157,7 +160,7 @@ class Tracker():
 		return image
 
 	@staticmethod
-	def show_segmentation(outputIm, windowName="output images"):
+	def show_segmentation(outputIm, windowName="Segmentation"):
 		output_images = []
 		for im in outputIm:
 			if len(np.shape(im)) < 3:

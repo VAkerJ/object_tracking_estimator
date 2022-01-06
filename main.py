@@ -8,11 +8,11 @@ from datetime import datetime as dt
 
 from utils import Rectangle, Grab_Cut, Kmeans, Contour_Detection, CV2_Tracker, Kalman_Tracker, Kalman_Filter
 
-def main(filepath, Segment, wait, verbose):
+def main(filepath, Segment, wait, log, verbose):
 	# initiera input fönstret och rektangeln som används för val av area
 	rect = Rectangle()
 	windowName = "Input window"
-	cv2.namedWindow(windowName)
+	cv2.namedWindow(windowName, cv2.WINDOW_NORMAL)
 	cv2.setMouseCallback(windowName, rect.mouse_test)
 
 	# ta första bilden ur videon
@@ -59,7 +59,13 @@ def main(filepath, Segment, wait, verbose):
 	# initiera output fönstret och cv2 trackern att jämföra med
 	cv2_tracker = CV2_Tracker(base_image, selected_area)
 	outputWindow = "Output window"
-	cv2.namedWindow(outputWindow)
+	cv2.namedWindow(outputWindow, cv2.WINDOW_NORMAL)
+
+	# initiera sparning av output fönstret
+	output_images = []
+	if log:
+		fourcc = cv2.VideoWriter_fourcc('m', 'p', '4', 'v')
+		save_output=cv2.VideoWriter('results/output.mp4',fourcc, 20.0,(int(video.get(3)),int(cv2_tracker.get(4))+int(video.get(4))))
 
 	K = int(not wait) # vänta på tangenttryck mellan varje bild ifall wait=true
 	while success:
@@ -75,8 +81,9 @@ def main(filepath, Segment, wait, verbose):
 		cv2.putText(image, "Time taken for update step:{} ms".format((b-a).microseconds//1000), (10,20), cv2.FONT_HERSHEY_PLAIN, 1.25,(0,0,255),2)
 		cv2.putText(cv2_tracker_im, "Time taken for update step:{} ms".format((c-b).microseconds//1000), (10,20), cv2.FONT_HERSHEY_PLAIN, 1.25,(255,0,0),2)
 
-		output_images = np.vstack([image, cv2_tracker_im])
-		cv2.imshow(outputWindow, output_images)
+		output_image = np.vstack([image, cv2_tracker_im])
+		cv2.imshow(outputWindow, output_image)
+		output_images.append(output_image)
 
 		# stoppa eller gå till nästa frame beroende på space eller esc
 		k = cv2.waitKey(K)
@@ -92,7 +99,8 @@ def main(filepath, Segment, wait, verbose):
 	if k%256 != 27:
 		print("Printing error data")
 		cv2.waitKey(0) # TODO: fixa snyggare
-	on_exit(video)
+	if log: on_exit(video, save_output, output_images)
+	else: on_exit(video)
 
 
 
@@ -110,8 +118,9 @@ def check_input(Segment, base_image, rect, prev_measurements=None, verbose=1):
 			outputMask, _, new_selected_area, outputIm = Segment(base_image, selected_area)
 			
 			# bara liten varning ifall man använde kmeans
-			if args["segment"] == "Kmeans":
-				print("Method not fully implemented for 'Kmeans'")
+			if args["segment"] == "Kmeans" or args["segment"] == "Contour_Detection":
+				Kalman_Tracker.show_segmentation(outputIm)
+				print("Method not fully implemented for 'Kmeans' or 'Contour_Detection")
 				return image
 
 			# skapar preliminära mätvärden att testa illustrering med
@@ -134,8 +143,13 @@ def check_input(Segment, base_image, rect, prev_measurements=None, verbose=1):
 	# ifall rektangeln inte excisterar
 	return None
 
-def on_exit(video):
+def on_exit(video, save_output=None, output_images=None):
 	video.release()
+
+	if save_output is not None:
+		for im in output_images:
+			save_output.write(im)
+		save_output.release()
 	cv2.destroyAllWindows()
 
 if __name__=="__main__":
@@ -153,7 +167,9 @@ if __name__=="__main__":
 	ap.add_argument("-k", "--clusters", type=int, default=2,
 		help="# of Kmeans clusters")
 	ap.add_argument("-w", "--wait", type=bool, default=False,
-		help="# if the method should wait between predictions")
+		help="# wait for key-input between predictions")
+	ap.add_argument("-l", "--log", type=bool, default=False,
+		help="# save the output video")
 	args = vars(ap.parse_args())
 
 	segmentaion_methods = {"Grab_Cut" : [Grab_Cut, [args["iter"], args["verbose"]]],
@@ -162,4 +178,4 @@ if __name__=="__main__":
 	seg_meth, segArgs = segmentaion_methods[args["segment"]]
 	segmentation_method = lambda image, area: seg_meth(image, area, *segArgs)
 
-	main(args["input"], segmentation_method, args["wait"], args["verbose"])
+	main(args["input"], segmentation_method, args["wait"], args["log"], args["verbose"])
