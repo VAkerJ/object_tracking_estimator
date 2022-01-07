@@ -137,7 +137,6 @@ class Tracker():
 		estimated_area = (p0, p1)
 
 		X = self.filter.X
-		print(self.filter.selected_area)
 		if self.setup == 1:
 			(x_min, y_min, x_len, y_len) = selected_area
 			p0 = (int(x_min),int(y_min))
