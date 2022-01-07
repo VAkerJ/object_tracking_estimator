@@ -7,12 +7,12 @@ from .image_tools import crop_image
 def grab_cut(base_image, selected_area, iterC, verbose=0):
 	cropped_image, cropped_area, selected_area = crop_image(base_image, selected_area, factor=2)
 
-	# initiera graphcut variabler
+	# Initiate variables for foreground and background
 	mask = np.zeros(cropped_image.shape[:2], dtype="uint8")
 	fgModel = np.zeros((1, 65), dtype="float")
 	bgModel = np.zeros((1, 65), dtype="float")
 	
-	# applicera grab cut
+	# Apply grabCut
 	start = time.time()
 	(mask, bgModel, fgModel) = cv2.grabCut(cropped_image, mask, cropped_area, \
 	bgModel, fgModel, iterCount=iterC, mode=cv2.GC_INIT_WITH_RECT)
@@ -31,24 +31,7 @@ def grab_cut(base_image, selected_area, iterC, verbose=0):
 	return outputMask, output, selected_area, outputIm
 
 def get_mask(mask):
-
-	## visualisera graph cut resultaten
-	#values = (
-	#	("Definite Background", cv2.GC_BGD),
-	#	("Probable Background", cv2.GC_PR_BGD),
-	#	("Definite Foreground", cv2.GC_FGD),
-	#	("Probable Foreground", cv2.GC_PR_FGD),
-	#)
-	#for (name, value) in values:
-	#	print("[INFO] showing mask for '{}'".format(name))
-	#	valueMask = (mask == value).astype("uint8") * 255
-	#	cv2.imshow(name, valueMask)
-	#	cv2.waitKey(1)
-
-	# maska så att prob bg och def bg blir 0
+	# Convert probabilities to background/foreground and rescale
 	outputMask = np.where((mask == cv2.GC_BGD) | (mask == cv2.GC_PR_BGD), 0,1)
-	
-	# skala fr 0:1 till 0:255
 	outputMask = (outputMask * 255).astype("uint8")
-
 	return outputMask

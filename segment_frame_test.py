@@ -8,11 +8,10 @@ from copy import copy
 from math import pi
 
 from utils import Rectangle, Grab_Cut, Kmeans, Contour_Detection, Kalman_Tracker
-Get_Measurements = Kalman_Tracker.get_measurements # för att det ska funka som tidigare
+Get_Measurements = Kalman_Tracker.get_measurements 
 
 
 def main():
-	# arg parser, nyttja text 'python3 segment_frame_test.py -s Kmeans' för att köra med Kmeans metoden
 	ap = argparse.ArgumentParser()
 	ap.add_argument("-i", "--input", type=str,
 		default=os.path.sep.join(["test_data", "frodo_1.mp4"]),

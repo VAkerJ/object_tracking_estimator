@@ -17,38 +17,33 @@ class Tracker():
 	def update(self, base_image):
 		selected_area = self.selected_area
 		
-		# segmentera och hämta mätvärden
+		# Segment and get measurements
 		outputMask, _, cropped_selected_area, outputIm = self.segment(base_image, selected_area)
 		success, measurements, delta_measurements = Tracker.get_measurements(outputMask, cropped_selected_area, self.prev_measurements, self.setup)
-
-		# skriver ut sista resultaten ifall error upstår, bör kanske skrivas om i framtiden så att den kan hantera att den tappar objektet
 		if not success:
 			Tracker.show_error_image(base_image, outputIm[:2], selected_area, cropped_selected_area)
 			return success, base_image
 
-		# skapar en liten ruta med de olika små output-bilderna
+		# Show output images
 		if self.verbose > 0:
 			measurement_im = Tracker.illustrate_measurements(copy(outputIm[0]), measurements, cropped_selected_area[0:2])
 			outputIm.append(measurement_im)
 			Tracker.show_segmentation(outputIm, self.segment_window)
 
-		# ritar ut rektangeln i stora output-bilden tsm med punkt för center och estimerat center
+		# Draw rectangle and dot to show estimate
 		center_measured = (int(measurements[0]), int(measurements[1]))
 		image = self.draw_estimate(copy(base_image), center_measured)
 
-		# updatera filtret?
+		# Run Kalman filter iteration and update selected area
 		self.update_filter(measurements, delta_measurements)
-		# updatera var rektangeln är
 		self.update_selected_area(measurements)
-
 		self.prev_measurements = measurements
-
 		return success, image
 
 	def update_filter(self, measurements, delta_measurements):
 		self.filter.update(measurements, delta_measurements)
 
-	def update_selected_area(self, measurements): # metod för att flytta den valda rutan
+	def update_selected_area(self, measurements): 
 		x, y, width, height = self.selected_area
 		x = int(measurements[0] - width/2)
 		y = int(measurements[1] - height/2)
@@ -57,7 +52,7 @@ class Tracker():
 		self.selected_area = self.filter.get_new_area()
 
 	#-----------------------------------------------------------------------------
-	# get image info/measurements metoder
+	# Get image info/measurements methods
 
 	@staticmethod
 	def get_measurements(mask, rectangle, prev_measurements, setup = 2):
@@ -66,15 +61,12 @@ class Tracker():
 		try:
 			measurements = Tracker.get_mask_info(mask, rectangle)
 		except ZeroDivisionError:
-			# ändra dehär för att hantera när bilden försvinner
 			print("[Alert] Empty mask using rectangle={}, aborting".format(rectangle))
 			success = False
 			return success, None, None
 
 		if setup == 1: measurements = np.append(np.append(measurements[0:2],measurements[8:10]),measurements[6:8])
 	
-		# räkna ut föränding i mätningar
-		# prev bör alltså inte innehålla förra hastigheterna
 		if prev_measurements is not None:
 			delta_measurements = [cur - prev for cur, prev in zip(measurements, prev_measurements)]
 			delta_measurements = np.asarray(delta_measurements, dtype=np.float32)
@@ -86,14 +78,14 @@ class Tracker():
 		return success, measurements, delta_measurements
 
 	@staticmethod
-	def get_indices(mask):
+	def get_indices(mask): # Calculate mean coordinates for the mask
 		index_list = []
 		X = np.shape(mask)[1]
 		Y = np.shape(mask)[0]
 		index_tot = [0,0]
 		for x in range(X):
 			for y in range(Y):
-				if (mask[y,x] > 0).any(): # Oklart varför .any() behövs när mask[y,x] är 1x1
+				if (mask[y,x] > 0).any(): 
 					index_list.append((x,y))
 
 					index_tot[0] += x
@@ -121,16 +113,16 @@ class Tracker():
 
 		x_min, x_max = i_min[0]+rectangle[0], i_max[0]+rectangle[0]
 		y_min, y_max = i_min[1]+rectangle[1], i_max[1]+rectangle[1]
-		index_x, index_y = index_x+rectangle[0], index_y+rectangle[1] # nu jobbar man inte med croppade koordinater längre
+		index_x, index_y = index_x+rectangle[0], index_y+rectangle[1] 
 
-		mask_density = index_amount/((x_max-x_min)*(y_max-y_min)) # formel för rektangel
+		mask_density = index_amount/((x_max-x_min)*(y_max-y_min)) 
 
 		return index_x, index_y, x_min, y_min, x_max, y_max, index_amount, mask_density, mask_width, mask_height
 
 	#-----------------------------------------------------------------------------
-	# illustrativa metoder
+	# Illustrative methods
 	def draw_estimate(self, image, center_measured):
-		# for drawing the box with estimated and measured center in the large outputwindow
+		# Draw the box with estimated and measured center in the large outputwindow
 		selected_area = self.filter.get_new_area()
 		p0 = selected_area[0:2]
 		p1 = (selected_area[0]+selected_area[2], selected_area[1]+selected_area[3])
@@ -156,19 +148,18 @@ class Tracker():
 		dot_color = (0,255,0)
 		Tracker.draw_box_with_dot(image, mask_area, center_estimate, box_color, dot_color)
 		
-
 		return image
 
 	@staticmethod
 	def illustrate_measurements(image, measurements, offset=[0,0]):
-		# for drawing drawing the cropped images and masks in the small window
+		# Draw the cropped images and masks in the small window
 		p0 = (int(measurements[2] - offset[0]), int(measurements[3] - offset[1]))
 		p1 = (int(measurements[4] - offset[0]), int(measurements[5] - offset[1]))
 
 		cv2.rectangle(image, p0, p1, (0,0,255), 1)
 
 		data = str(measurements[-1])[0:4]
-		cv2.putText(image, "Psi:{}".format(data), p0, cv2.FONT_HERSHEY_PLAIN, 1,(0,0,255),1) # TODO: kom på bra sak att plotta här
+		cv2.putText(image, "Psi:{}".format(data), p0, cv2.FONT_HERSHEY_PLAIN, 1,(0,0,255),1)
 		return image
 
 	@staticmethod

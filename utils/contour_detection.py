@@ -7,15 +7,14 @@ from .image_tools import crop_image
 def contour_detection(base_image, selected_area, verbose=0):
 	cropped_image, _, _ = crop_image(base_image, selected_area, factor=0)
 
-
 	start = time.time()
-	# hittar edges
+	# Find edges
 	gray_image = cv2.cvtColor(cropped_image, cv2.COLOR_RGB2GRAY)
-	_, threshold = cv2.threshold(gray_image, np.mean(gray_image), 255, cv2.THRESH_BINARY_INV) # inte full kolla på hur denhär funkar
-	edges = cv2.dilate(cv2.Canny(threshold, 0, 255), None) # eller denhär
+	_, threshold = cv2.threshold(gray_image, np.mean(gray_image), 255, cv2.THRESH_BINARY_INV) 
+	edges = cv2.dilate(cv2.Canny(threshold, 0, 255), None) 
 
-	# skapar segment/områden av edges
-	contours = sorted(cv2.findContours(edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)[-2], key=cv2.contourArea)[-1] # verkl int koll
+	# Segmentation
+	contours = sorted(cv2.findContours(edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)[-2], key=cv2.contourArea)[-1] 
 	outputMask = np.zeros(cropped_image.shape[:2], np.uint8)
 	masked = cv2.drawContours(outputMask, [contours], -1, 255, -1)
 

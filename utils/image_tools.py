@@ -36,16 +36,16 @@ class Rectangle():
 		self.p0, self.p1, self.ptemp = None, None, None
 
 	def mouse_test(self, event, x, y, flags, param):
-		if event == 1: #mouse1 click
+		if event == 1: # mouse1 click
 			self.p0 = (x,y)
 
-		elif event == 4: #mouse1 release
+		elif event == 4: # mouse1 release
 			self.p1 = (x,y)
 
 		if self.p0 is not None: self.ptemp = (x,y)
 
 def crop_image(base_image, selected_area, factor=0):
-	if factor<0: factor=0 # ändra så att man kan minska?
+	if factor<0: factor=0 
 
 	(x_min, y_min, x_len, y_len) = selected_area
 	x_max, y_max = x_min+x_len, y_min+y_len
