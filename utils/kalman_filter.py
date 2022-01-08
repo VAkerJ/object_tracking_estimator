@@ -11,13 +11,13 @@ class Filter():
 			k_fil = self.init_setup0(dim_x, dim_z, dim_u, dt, P, process_var, measurement_var)
 			self.set_x = self.set_x_setup0
 			self.set_selected_area_setup = self.set_selected_area_setup0
-			self.update_setup = lambda u, z: (u, z)
+			self.update_setup = lambda z, u: (z, u)
 		elif setup == 1:
 			dim_x, dim_z, dim_u = 4, 2, 2
 			k_fil = self.init_setup1(dim_x, dim_z, dim_u, dt, P, process_var, measurement_var)
 			self.set_x = self.set_x_setup1
 			self.set_selected_area_setup = self.set_selected_area_setup1
-			self.update_setup = lambda u, z: (u[0:2], z[0:2])
+			self.update_setup = lambda z, u: (z[0:2], u[0:2])
 		else:
 			raise ValueError("setup must be 0 or 1")
 			
@@ -33,11 +33,10 @@ class Filter():
 	
 
 	def update(self, measurements, delta_measurements):
-		u,z = self.update_setup(measurements, delta_measurements)
+		z,u = self.update_setup(measurements, delta_measurements)
 
 		self.k_fil.predict(u)
 		self.k_fil.update(z)
-
 		self.set_est_X()
 		self.data[0].append(list(np.diag(self.k_fil.P_post)[0:1])[0])
 		self.data[1].append(self.k_fil.K[0][0])
@@ -48,6 +47,7 @@ class Filter():
 		P = list(self.k_fil.P.diagonal())
 		X = list(self.k_fil.x[:-1].astype(int))
 		X.append(self.k_fil.x[-1])
+
 		self.X = X
 
 	def set_selected_area(self, selected_area):
