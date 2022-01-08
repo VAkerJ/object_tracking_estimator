@@ -10,8 +10,7 @@ from utils import Rectangle, Grab_Cut, Kmeans, Contour_Detection, CV2_Tracker, K
 
 
 
-def main(filepath, Segment, wait, log, verbose):
-	setup = 2 # 2 for advanced model
+def main(filepath, Segment, wait, log, setup, verbose):
 	# initiera input fönstret och rektangeln som används för val av area
 	rect = Rectangle()
 	windowName = "Input window"
@@ -81,8 +80,10 @@ def main(filepath, Segment, wait, log, verbose):
 		_, cv2_tracker_im = cv2_tracker.update(copy(base_image))
 		c = dt.now() # tidtagning
 
-		cv2.putText(image, "Time taken for update step:{} ms".format((b-a).microseconds//1000), (10,20), cv2.FONT_HERSHEY_PLAIN, 1.25,(0,0,255),2)
-		cv2.putText(cv2_tracker_im, "Time taken for update step:{} ms".format((c-b).microseconds//1000), (10,20), cv2.FONT_HERSHEY_PLAIN, 1.25,(255,0,0),2)
+		t1 = b-a
+		t2 = c-b
+		cv2.putText(image, "Time taken for update step:{} ms".format(t1.microseconds//1000 + t1.seconds*1000), (10,20), cv2.FONT_HERSHEY_PLAIN, 1.25,(0,0,255),2)
+		cv2.putText(cv2_tracker_im, "Time taken for update step:{} ms".format(t2.microseconds//1000 + t2.seconds*1000), (10,20), cv2.FONT_HERSHEY_PLAIN, 1.25,(255,0,0),2)
 
 		output_image = np.vstack([image, cv2_tracker_im])
 		cv2.imshow(outputWindow, output_image)
@@ -99,7 +100,7 @@ def main(filepath, Segment, wait, log, verbose):
 			image = copy(base_image)
 			print('Read a new frame: ', success)
 
-	kalman_tracker.filter.plotData()
+	#kalman_tracker.filter.plotData()
 
 	if k%256 != 27:
 		print("Printing error data")
@@ -110,7 +111,7 @@ def main(filepath, Segment, wait, log, verbose):
 
 
 
-def check_input(Segment, base_image, rect, prev_measurements=None, setup = 2, verbose=1):
+def check_input(Segment, base_image, rect, prev_measurements=None, setup = 0, verbose=1):
 	# kolla om rektangeln börjat bli vald och rita isf ut den i bilden
 	if rect.is_active():
 		p0, p1 = rect.get_points()
@@ -129,7 +130,8 @@ def check_input(Segment, base_image, rect, prev_measurements=None, setup = 2, ve
 				return image
 
 			# skapar preliminära mätvärden att testa illustrering med
-			success, measurements, delta_measurements = Kalman_Tracker.get_measurements(outputMask, new_selected_area, prev_measurements, setup = setup) 
+			success, measurements, delta_measurements = Kalman_Tracker.get_measurements(outputMask, new_selected_area, prev_measurements) 
+			if setup == 1: measurements = np.append(np.append(measurements[0:2],measurements[8:10]),measurements[6:8])
 			if not success:
 				print('No foreground found, try again')
 				return image
@@ -172,9 +174,11 @@ if __name__=="__main__":
 	ap.add_argument("-k", "--clusters", type=int, default=2,
 		help="# of Kmeans clusters")
 	ap.add_argument("-w", "--wait", type=bool, default=False,
-		help="# wait for key-input between predictions")
+		help="wait for key-input between predictions")
 	ap.add_argument("-l", "--log", type=bool, default=False,
-		help="# save the output video")
+		help="save the output video")
+	ap.add_argument("-e", "--setup", type=int, default=0,
+		help="type of setup used during estimation, 0 == advanced, 1 == simple")
 	args = vars(ap.parse_args())
 
 	segmentaion_methods = {"Grab_Cut" : [Grab_Cut, [args["iter"], args["verbose"]]],
@@ -183,4 +187,4 @@ if __name__=="__main__":
 	seg_meth, segArgs = segmentaion_methods[args["segment"]]
 	segmentation_method = lambda image, area: seg_meth(image, area, *segArgs)
 
-	main(args["input"], segmentation_method, args["wait"], args["log"], args["verbose"])
+	main(args["input"], segmentation_method, args["wait"], args["log"], args["setup"], args["verbose"])

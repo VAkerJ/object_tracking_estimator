@@ -3,13 +3,22 @@ from copy import copy
 import cv2
 
 class Tracker():
-	def __init__(self, Segment, Filter, selected_area, verbose, setup = 2):
+	def __init__(self, Segment, Filter, selected_area, verbose, setup = 0):
 		self.filter = Filter
 		self.prev_measurements = None
 		self.segment = Segment
 		self.verbose = verbose
 		self.selected_area = selected_area
 		self.setup = setup
+		if setup == 0:
+			self.get_measurements = Tracker.get_measurements
+			self.draw_estimate_setup = self.draw_estimate_setup0
+		elif setup == 1:
+			self.get_measurements = self.get_measurements_setup1
+			self.draw_estimate_setup = self.draw_estimate_setup1
+		else:
+			raise ValueError("setup must be 0 or 1")
+
 
 		self.segment_window = "Segmentation"
 		cv2.namedWindow(self.segment_window, cv2.WINDOW_NORMAL)
@@ -19,7 +28,7 @@ class Tracker():
 		
 		# segmentera och hämta mätvärden
 		outputMask, _, cropped_selected_area, outputIm = self.segment(base_image, selected_area)
-		success, measurements, delta_measurements = Tracker.get_measurements(outputMask, cropped_selected_area, self.prev_measurements, self.setup)
+		success, measurements, delta_measurements = self.get_measurements(outputMask, cropped_selected_area, self.prev_measurements)
 
 		# skriver ut sista resultaten ifall error upstår, bör kanske skrivas om i framtiden så att den kan hantera att den tappar objektet
 		if not success:
@@ -60,7 +69,7 @@ class Tracker():
 	# get image info/measurements metoder
 
 	@staticmethod
-	def get_measurements(mask, rectangle, prev_measurements, setup = 2):
+	def get_measurements(mask, rectangle, prev_measurements):
 		success = True
 
 		try:
@@ -70,8 +79,6 @@ class Tracker():
 			print("[Alert] Empty mask using rectangle={}, aborting".format(rectangle))
 			success = False
 			return success, None, None
-
-		if setup == 1: measurements = np.append(np.append(measurements[0:2],measurements[8:10]),measurements[6:8])
 	
 		# räkna ut föränding i mätningar
 		# prev bör alltså inte innehålla förra hastigheterna
@@ -132,24 +139,12 @@ class Tracker():
 	def draw_estimate(self, image, center_measured):
 		# for drawing the box with estimated and measured center in the large outputwindow
 		selected_area = self.filter.get_new_area()
-		p0 = selected_area[0:2]
-		p1 = (selected_area[0]+selected_area[2], selected_area[1]+selected_area[3])
-		estimated_area = (p0, p1)
+		
 
 		X = self.filter.X
-		if self.setup == 1:
-			(x_min, y_min, x_len, y_len) = selected_area
-			p0 = (int(x_min),int(y_min))
-			p1 = (int(x_min + x_len),int(y_min + y_len))
-			center_estimate = (int(X[0]),int(X[1]))
-		else:
-			p0 = (int(X[2]), int(X[3]))
-			p1 = (int(X[4]), int(X[5]))
-			center_estimate = self.filter.get_center_est()
-			box_color = (0,0,255)
-			dot_color = (255,0,0)
-			Tracker.draw_box_with_dot(image, estimated_area, center_measured, box_color, dot_color)
-		
+
+		center_estimate, p0, p1 = self.draw_estimate_setup(X, selected_area, image, center_measured)
+
 		mask_area = (p0, p1)
 		
 		box_color = (0,255,0)
@@ -158,6 +153,7 @@ class Tracker():
 		
 
 		return image
+
 
 	@staticmethod
 	def illustrate_measurements(image, measurements, offset=[0,0]):
@@ -209,4 +205,32 @@ class Tracker():
 		cropped_image = cv2.rectangle(copy(outputIm[0]), (x,y), (x2, y2), (0,0,255), 1)
 
 		Tracker.show_segmentation([cropped_image, outputIm[1]], "ERROR OUTPUT")
-	
+
+################################################################################################
+# SETUP == 0 & SETUP == 1 METHODS
+	def draw_estimate_setup0(self, X, selected_area, image, center_measured):
+		p0 = selected_area[0:2]
+		p1 = (selected_area[0]+selected_area[2], selected_area[1]+selected_area[3])
+		estimated_area = (p0, p1)
+		p0 = (int(X[2]), int(X[3]))
+		p1 = (int(X[4]), int(X[5]))
+		center_estimate = self.filter.get_center_est()
+
+		box_color = (0,0,255)
+		dot_color = (255,0,0)
+		Tracker.draw_box_with_dot(image, estimated_area, center_measured, box_color, dot_color)
+		return center_estimate, p0, p1
+
+	def draw_estimate_setup1(self, X, selected_area, *kwargs):
+		(x_min, y_min, x_len, y_len) = selected_area
+		p0 = (int(x_min),int(y_min))
+		p1 = (int(x_min + x_len),int(y_min + y_len))
+		center_estimate = (int(X[0]),int(X[1]))
+		return center_estimate, p0, p1
+
+	def get_measurements_setup1(self, mask, rectangle, prev_measurements):
+		success, measurements, delta_measurements = Tracker.get_measurements(mask, rectangle, prev_measurements) 
+		measurements = np.append(np.append(measurements[0:2],measurements[8:10]),measurements[6:8])
+		return success, measurements, delta_measurements
+
+################################################################################################
